@@ -6,7 +6,7 @@ do
     local VirtualUser = game:GetService("VirtualUser")
     local LocalPlayer = Players.LocalPlayer
 
-    -- Очистка старого UI при перезапуске
+    -- Удаление старого UI
     if game.CoreGui:FindFirstChild("FixScript_Event") then 
         game.CoreGui.FixScript_Event:Destroy() 
     end
@@ -20,17 +20,17 @@ do
     local currentWorld = "1 World"
     local currentDistance = nil
     local currentSpeed = 110
-    local autoFarmActive = false
+    local autoFarmCoins = false
+    local autoFarmCups = false
     local isNoclip = false
     local isGodMode = false
-    local isMinimized = false
-    local isMenuOpen = true
     local accentColor = Color3.fromRGB(245, 158, 11)
 
     local noClipConnection = nil
     local godModeConnection = nil
+    local initialPosition = nil
 
-    -- База точек фарма (Waypoints)
+    -- База точек фарма (Без Bbnos)
     local Waypoints = {
         ["1 World"] = {
             ["+1 wins"] = {Vector3.new(2.8, 8.5, 74.3), Vector3.new(-22.3, 10.4, 286)},
@@ -55,10 +55,6 @@ do
             ["+500m wins"] = {Vector3.new(-1433.2, -159.7, -877.5), Vector3.new(-1431, -157.6, -833.5), Vector3.new(-1430.4, -125.1, -730.1), Vector3.new(-1430.9, -69.9, -537.4), Vector3.new(-1453.9, -69.9, -492.7), Vector3.new(-1453.9, -58.4, -392.5), Vector3.new(-1453.9, -57.4, -264.7), Vector3.new(-1453.9, -57.4, -186.8), Vector3.new(-1480.8, -59.4, -15.8)},
             ["+800m wins"] = {Vector3.new(-1434.9, -159.7, -875.9), Vector3.new(-1430.2, -158.8, -837.1), Vector3.new(-1427.6, -125.2, -730.4), Vector3.new(-1427, -69.9, -538.6), Vector3.new(-1455.2, -69.9, -493.3), Vector3.new(-1455.9, -70.4, -444.3), Vector3.new(-1456.7, -58.5, -393), Vector3.new(-1458.4, -57.4, -266.1), Vector3.new(-1456.8, -57.4, -186.8), Vector3.new(-1452.9, -57.6, 7.6), Vector3.new(-1451.4, -48.6, 84.7), Vector3.new(-1451.4, 83, 84.7), Vector3.new(-1475.2, 92.3, 95.5), Vector3.new(-1475.2, 212.8, 95.6), Vector3.new(-1472.1, 214.6, 143.2), Vector3.new(-1469.4, 222.8, 178.5), Vector3.new(-1464.9, 223, 229.5), Vector3.new(-1463.9, 215, 260), Vector3.new(-1480.8, 212.6, 332.1)},
             ["+1.25b wins"] = {Vector3.new(-1434.1, -159.6, -879), Vector3.new(-1431.8, -157.7, -834.2), Vector3.new(-1430.5, -125.6, -732.2), Vector3.new(-1427.6, -69.8, -540.1), Vector3.new(-1454.8, -69.8, -495.1), Vector3.new(-1454.8, -70.3, -444.5), Vector3.new(-1455.3, -58.9, -395), Vector3.new(-1454.4, -57.5, 4.5), Vector3.new(-1454.5, -55.8, 84.8), Vector3.new(-1454.5, 84.8, 84.8), Vector3.new(-1475, 102.7, 96), Vector3.new(-1475, 212, 96), Vector3.new(-1473.6, 214.7, 141.2), Vector3.new(-1457.4, 222.5, 176.7), Vector3.new(-1455.8, 223.3, 228.9), Vector3.new(-1455.8, 214.7, 270.6), Vector3.new(-1455.8, 214.5, 627.8), Vector3.new(-1455.8, 365.5, 627.8), Vector3.new(-1434.2, 359.7, 490.7), Vector3.new(-1336, 360.8, 494.3), Vector3.new(-1246.3, 328.8, 517.1), Vector3.new(-1236, 323.2, 600.3), Vector3.new(-1220.6, 342.9, 810.9), Vector3.new(-1361.8, 363, 834.8), Vector3.new(-1403.6, 373.5, 724.7), Vector3.new(-1403.6, 545.5, 724.7), Vector3.new(-1431.3, 530.6, 759.6)}
-        },
-        ["Bbnos World"] = {
-            ["+25k cash"] = {Vector3.new(-129.9, 59.1, -236.7), Vector3.new(184.7, 59.2, -234), Vector3.new(317.6, 59.2, -318.6), Vector3.new(415, 59.2, -233.6), Vector3.new(488.4, 62.7, -234.2), Vector3.new(1086.1, 167.3, -703.8), Vector3.new(1074.7, 167.3, 772.4), Vector3.new(307.9, 167.3, 775), Vector3.new(-461.4, 167.3, 774.6), Vector3.new(-488.5, 171.3, 775.4), Vector3.new(-172.2, 307.4, -897.1), Vector3.new(546.5, 307.4, -896.3), Vector3.new(549, 307.4, -968), Vector3.new(673.3, 307.4, -964.5), Vector3.new(672, 307.4, -899.3), Vector3.new(743, 307.4, -897.9), Vector3.new(1561.5, 307.4, -895.7), Vector3.new(1562.6, 306.3, -105.2), Vector3.new(1831, 306.3, -102.5), Vector3.new(1829.7, 309.1, 168.9), Vector3.new(1827.3, 812.2, 169.5), Vector3.new(1821.8, 810.4, 947.2), Vector3.new(1662.9, 810.4, 942.6), Vector3.new(1577.5, 810.4, 917.7), Vector3.new(1557.9, 817.9, 908.8), Vector3.new(1440, 810.4, 861.5), Vector3.new(1403.8, 810.4, 858.5), Vector3.new(1376.6, 817.6, 857.1), Vector3.new(1184.3, 810.3, 854.8), Vector3.new(1088.1, 810.3, 853.3), Vector3.new(944.4, 807.3, 851.2), Vector3.new(930.9, 810.3, 852.2), Vector3.new(912.7, 810.3, 921.8), Vector3.new(862.8, 810.4, 952.3), Vector3.new(807.2, 812, 903.5)},
-            ["+50k cash"] = {Vector3.new(759.5, 810.4, 948.4), Vector3.new(716.1, 810.4, 946.7), Vector3.new(719.7, 810.4, 572.4), Vector3.new(584.8, 810.4, 566.2), Vector3.new(587.7, 810.4, 464.5), Vector3.new(390.5, 810.4, 465), Vector3.new(394.7, 810.4, 729.3), Vector3.new(510.2, 810.4, 732.8), Vector3.new(506.6, 810.4, 848), Vector3.new(309.8, 810.4, 845.7), Vector3.new(308.6, 810.4, 939.3), Vector3.new(120.7, 810.4, 947.6), Vector3.new(103.5, 812.5, 946.4)}
         }
     }
 
@@ -66,10 +62,10 @@ do
         ["+1 wins"] = 1, ["+3 wins"] = 2, ["+10 wins"] = 3, ["+250k wins"] = 4, ["+400k wins"] = 5,
         ["+1,5m wins"] = 6, ["+2,5m wins"] = 7, ["+4m wins"] = 8, ["+6m wins"] = 9, ["+10m wins"] = 10,
         ["+15m wins"] = 11, ["+25m wins"] = 12, ["+40m wins"] = 13, ["+60m wins"] = 14, ["+300m wins"] = 15,
-        ["+500m wins"] = 16, ["+800m wins"] = 17, ["+1.25b wins"] = 18, ["+25k cash"] = 19, ["+50k cash"] = 20
+        ["+500m wins"] = 16, ["+800m wins"] = 17, ["+1.25b wins"] = 18
     }
 
-    -- Функция полёта Noclip
+    -- Noclip
     local function setNoClip(state) 
         isNoclip = state
         if state then 
@@ -93,7 +89,93 @@ do
         end 
     end
 
-    -- Логика движения к точке
+    -- God Mode
+    local function toggleGodMode(state)
+        isGodMode = state
+        if state then
+            godModeConnection = RunService.RenderStepped:Connect(function()
+                local char = LocalPlayer.Character
+                if char and char:FindFirstChild("Humanoid") then
+                    local hum = char.Humanoid
+                    hum.MaxHealth = math.huge
+                    hum.Health = math.huge
+                    pcall(function() hum:SetStateEnabled(Enum.HumanoidStateType.Dead, false) end)
+                end
+            end)
+        else
+            if godModeConnection then
+                godModeConnection:Disconnect()
+                godModeConnection = nil
+            end
+            local char = LocalPlayer.Character
+            if char and char:FindFirstChild("Humanoid") then
+                pcall(function() char.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Dead, true) end)
+            end
+        end
+    end
+
+    -- Сбор Монет
+    local function getCoinsList()
+        local coins = {}
+        for _, obj in ipairs(workspace:GetDescendants()) do
+            if obj:IsA("BasePart") or obj:IsA("MeshPart") then
+                local name = obj.Name:lower()
+                local pName = obj.Parent and obj.Parent.Name:lower() or ""
+                local isBlacklisted = name:find("wave") or pName:find("wave") or name:find("ramp") or pName:find("ramp") or name:find("slide") or name:find("rainbow") or name:find("stage")
+                local isSmallEnough = obj.Size.X < 15 and obj.Size.Y < 15 and obj.Size.Z < 15
+
+                if not isBlacklisted and isSmallEnough then
+                    if (name:find("summer") or name:find("coin") or name:find("sun")) then
+                        if obj.Transparency < 1 and not obj.Parent:FindFirstChild("Humanoid") then
+                            table.insert(coins, obj)
+                        end
+                    end
+                end
+            end
+        end
+        return coins
+    end
+
+    local function startCoinFarm()
+        task.spawn(function()
+            local char = LocalPlayer.Character
+            if char and char:FindFirstChild("HumanoidRootPart") then initialPosition = char.HumanoidRootPart.CFrame end
+            local stoodAtBase = false
+
+            while autoFarmCoins do
+                char = LocalPlayer.Character
+                if char and char:FindFirstChild("HumanoidRootPart") then
+                    local hrp = char.HumanoidRootPart
+                    local coinsList = getCoinsList()
+
+                    if #coinsList > 0 then
+                        stoodAtBase = false
+                        for _, coin in ipairs(coinsList) do
+                            if not autoFarmCoins then break end
+                            if coin and coin.Parent and coin.Position then
+                                hrp.CFrame = coin.CFrame
+                                if firetouchinterest then
+                                    firetouchinterest(hrp, coin, 0)
+                                    task.wait(0.01)
+                                    firetouchinterest(hrp, coin, 1)
+                                end
+                                task.wait(0.15)
+                            end
+                        end
+                    else
+                        if initialPosition and not stoodAtBase then
+                            hrp.CFrame = initialPosition
+                            stoodAtBase = true
+                        end
+                        task.wait(0.5)
+                    end
+                end
+                task.wait(0.1)
+            end
+        end)
+    end
+
+    -- Движение к точке
     local function flyTo(targetPos) 
         local char = LocalPlayer.Character
         if (not char or not char:FindFirstChild("HumanoidRootPart")) then return false end 
@@ -104,7 +186,7 @@ do
         bv.Parent = hrp
         
         local reached = false
-        while autoFarmActive and not reached do 
+        while autoFarmCups and not reached do 
             if (not char or not char:FindFirstChild("HumanoidRootPart")) then break end 
             
             local distance = (hrp.Position - targetPos).Magnitude
@@ -120,42 +202,31 @@ do
         return reached 
     end
 
-    -- Главный цикл автофарма кубков
-    local function startAutoFarmLoop() 
+    -- Автофарм кубков по этапам
+    local function startAutoFarmCupsLoop() 
         task.spawn(function() 
-            while autoFarmActive do 
+            while autoFarmCups do 
                 local worldData = Waypoints[currentWorld]
                 local currentWaypoints = worldData and worldData[currentDistance] 
                 
                 if (currentWaypoints and #currentWaypoints > 0) then 
                     setNoClip(true)
-                    
-                    if (currentWorld == "Bbnos World" and currentDistance == "+50k cash") then 
-                        local args = {[1] = 12, [2] = "wins"}
-                        pcall(function() 
-                            game:GetService("ReplicatedStorage").Remotes.RequestCheckpointTp:FireServer(unpack(args))
-                        end)
-                        task.wait(0.5)
-                    end 
-                    
                     for i, waypoint in ipairs(currentWaypoints) do 
-                        if not autoFarmActive then break end 
+                        if not autoFarmCups then break end 
                         flyTo(waypoint)
-                        if (currentWorld == "Bbnos World" and currentDistance == "+50k cash" and i == #currentWaypoints) then 
-                            task.wait(1)
-                        end 
                     end 
                 else 
                     task.wait(1)
                 end 
                 task.wait(0.1)
             end 
-            
             setNoClip(false)
         end)
     end
 
+    -- ==========================================
     -- GUI
+    -- ==========================================
     local ScreenGui = Instance.new("ScreenGui", game:GetService("CoreGui"))
     ScreenGui.Name = "FixScript_Event"
 
@@ -166,7 +237,7 @@ do
     MainFrame.ClipsDescendants = false
     Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 10)
 
-    -- Плавающий виджет со ЗНАЧКОМ при сворачивании
+    -- Плавающий виджет
     local ToggleWidget = Instance.new("Frame", ScreenGui)
     ToggleWidget.BackgroundColor3 = Color3.fromRGB(15, 15, 22)
     ToggleWidget.Position = UDim2.new(0.5, -70, 0.05, 0)
@@ -175,7 +246,6 @@ do
     Instance.new("UICorner", ToggleWidget).CornerRadius = UDim.new(0, 8)
     local WidgetStroke = Instance.new("UIStroke", ToggleWidget)
     WidgetStroke.Color = accentColor
-    WidgetStroke.Thickness = 1
 
     local WidgetText = Instance.new("TextLabel", ToggleWidget)
     WidgetText.BackgroundTransparency = 1
@@ -185,7 +255,7 @@ do
     WidgetText.TextColor3 = accentColor
     WidgetText.TextSize = 13
 
-    -- Драг (Перетаскивание)
+    -- Перетаскивание
     local dragging, dragStart, startPos
     MainFrame.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -211,7 +281,7 @@ do
         end
     end)
 
-    -- Левая боковая панель
+    -- Боковая панель
     local Sidebar = Instance.new("Frame", MainFrame)
     Sidebar.BackgroundColor3 = Color3.fromRGB(15, 15, 22)
     Sidebar.Size = UDim2.new(0, 130, 1, 0)
@@ -226,11 +296,43 @@ do
     Title.TextColor3 = accentColor
     Title.TextSize = 16
 
-    -- Контентная зона
+    -- Контентная область
     local ContentArea = Instance.new("Frame", MainFrame)
     ContentArea.BackgroundTransparency = 1
     ContentArea.Position = UDim2.new(0, 140, 0, 40)
     ContentArea.Size = UDim2.new(1, -150, 1, -50)
+
+    local FarmContainer = Instance.new("ScrollingFrame", ContentArea)
+    FarmContainer.BackgroundTransparency = 1
+    FarmContainer.Size = UDim2.new(1, 0, 1, 0)
+    FarmContainer.CanvasSize = UDim2.new(0, 0, 0, 320)
+    FarmContainer.ScrollBarThickness = 2
+
+    local PlayerContainer = Instance.new("Frame", ContentArea)
+    PlayerContainer.BackgroundTransparency = 1
+    PlayerContainer.Size = UDim2.new(1, 0, 1, 0)
+    PlayerContainer.Visible = false
+
+    -- Вкладки слева
+    local function createTabBtn(text, yPos, targetContainer)
+        local btn = Instance.new("TextButton", Sidebar)
+        btn.BackgroundTransparency = 1
+        btn.Position = UDim2.new(0, 0, 0, yPos)
+        btn.Size = UDim2.new(1, 0, 0, 32)
+        btn.Font = Enum.Font.GothamBold
+        btn.Text = text
+        btn.TextColor3 = Color3.fromRGB(200, 200, 200)
+        btn.TextSize = 13
+        
+        btn.MouseButton1Click:Connect(function()
+            FarmContainer.Visible = false
+            PlayerContainer.Visible = false
+            targetContainer.Visible = true
+        end)
+    end
+
+    createTabBtn("Фарм", 50, FarmContainer)
+    createTabBtn("Игрок", 90, PlayerContainer)
 
     -- Кнопки Окна
     local MinBtn = Instance.new("TextButton", MainFrame)
@@ -252,32 +354,87 @@ do
     CloseBtn.TextColor3 = Color3.fromRGB(250, 80, 80)
     Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 4)
     CloseBtn.MouseButton1Click:Connect(function() 
-        autoFarmActive = false
+        autoFarmCoins = false
+        autoFarmCups = false
         setNoClip(false)
+        toggleGodMode(false)
         if afkConnection then afkConnection:Disconnect() end
         ScreenGui:Destroy() 
     end)
 
-    -- Панели выбора Миров (Кнопки 1, 2, 3, Bbnos)
-    local WorldLabel = Instance.new("TextLabel", ContentArea)
+    -- Генератор тумблеров
+    local function CreateToggle(parent, text, yPos, callback)
+        local frame = Instance.new("Frame", parent)
+        frame.BackgroundColor3 = Color3.fromRGB(16, 16, 23)
+        frame.Position = UDim2.new(0, 0, 0, yPos)
+        frame.Size = UDim2.new(1, -10, 0, 36)
+        Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 8)
+
+        local label = Instance.new("TextLabel", frame)
+        label.BackgroundTransparency = 1
+        label.Position = UDim2.new(0, 12, 0, 0)
+        label.Size = UDim2.new(0.65, 0, 1, 0)
+        label.Font = Enum.Font.GothamBold
+        label.Text = text
+        label.TextColor3 = Color3.fromRGB(200, 200, 220)
+        label.TextSize = 11
+        label.TextXAlignment = Enum.TextXAlignment.Left
+
+        local btn = Instance.new("TextButton", frame)
+        btn.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
+        btn.Position = UDim2.new(1, -48, 0.5, -10)
+        btn.Size = UDim2.new(0, 38, 0, 20)
+        btn.Text = ""
+        Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 10)
+
+        local dot = Instance.new("Frame", btn)
+        dot.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        dot.Position = UDim2.new(0, 2, 0.5, -8)
+        dot.Size = UDim2.new(0, 16, 0, 16)
+        Instance.new("UICorner", dot).CornerRadius = UDim.new(0, 8)
+
+        local state = false
+        btn.MouseButton1Click:Connect(function()
+            state = not state
+            if state then
+                TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = accentColor}):Play()
+                TweenService:Create(dot, TweenInfo.new(0.2), {Position = UDim2.new(0, 20, 0.5, -8)}):Play()
+            else
+                TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(40, 40, 55)}):Play()
+                TweenService:Create(dot, TweenInfo.new(0.2), {Position = UDim2.new(0, 2, 0.5, -8)}):Play()
+            end
+            callback(state)
+        end)
+    end
+
+    -- ==========================================
+    -- ЭЛЕМЕНТЫ ВКЛАДКИ ФАРМ
+    -- ==========================================
+    CreateToggle(FarmContainer, "Авто Фарм Монет", 0, function(state)
+        autoFarmCoins = state
+        if state then startCoinFarm() end
+    end)
+
+    local WorldLabel = Instance.new("TextLabel", FarmContainer)
     WorldLabel.BackgroundTransparency = 1
-    WorldLabel.Size = UDim2.new(1, 0, 0, 18)
+    WorldLabel.Position = UDim2.new(0, 0, 0, 44)
+    WorldLabel.Size = UDim2.new(1, 0, 0, 16)
     WorldLabel.Font = Enum.Font.GothamSemibold
     WorldLabel.Text = "Мир: [ 1 World ]"
     WorldLabel.TextColor3 = Color3.fromRGB(200, 200, 220)
-    WorldLabel.TextSize = 13
+    WorldLabel.TextSize = 12
     WorldLabel.TextXAlignment = Enum.TextXAlignment.Left
 
-    local WorldsFrame = Instance.new("Frame", ContentArea)
+    local WorldsFrame = Instance.new("Frame", FarmContainer)
     WorldsFrame.BackgroundColor3 = Color3.fromRGB(16, 16, 23)
-    WorldsFrame.Position = UDim2.new(0, 0, 0, 22)
-    WorldsFrame.Size = UDim2.new(1, 0, 0, 36)
+    WorldsFrame.Position = UDim2.new(0, 0, 0, 64)
+    WorldsFrame.Size = UDim2.new(1, -10, 0, 32)
     Instance.new("UICorner", WorldsFrame).CornerRadius = UDim.new(0, 8)
 
     local worldButtons = {}
-    local DropdownBtn = Instance.new("TextButton", ContentArea)
-    local DropdownList = Instance.new("ScrollingFrame", ContentArea)
-    local SliderLabel = Instance.new("TextLabel", ContentArea)
+    local DropdownBtn = Instance.new("TextButton", FarmContainer)
+    local DropdownList = Instance.new("ScrollingFrame", FarmContainer)
+    local SliderLabel = Instance.new("TextLabel", FarmContainer)
     local SliderFillAuto = Instance.new("Frame")
 
     local function buildDistanceOptions() 
@@ -301,20 +458,19 @@ do
             local btn = Instance.new("TextButton")
             btn.Parent = DropdownList
             btn.BackgroundColor3 = Color3.fromRGB(22, 22, 30)
-            btn.Size = UDim2.new(1, 0, 0, 32)
+            btn.Size = UDim2.new(1, 0, 0, 28)
             btn.Font = Enum.Font.GothamSemibold
-            btn.Text = "            " .. opt
+            btn.Text = "          " .. opt
             btn.TextColor3 = Color3.fromRGB(200, 200, 220)
-            btn.TextSize = 12
+            btn.TextSize = 11
             btn.TextXAlignment = Enum.TextXAlignment.Left
             btn.ZIndex = 51
             Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
             
-            -- Иконка Кубка
             local TrophyIcon = Instance.new("ImageLabel", btn)
             TrophyIcon.BackgroundTransparency = 1
-            TrophyIcon.Position = UDim2.new(0, 8, 0.5, -10)
-            TrophyIcon.Size = UDim2.new(0, 20, 0, 20)
+            TrophyIcon.Position = UDim2.new(0, 6, 0.5, -8)
+            TrophyIcon.Size = UDim2.new(0, 16, 0, 16)
             TrophyIcon.Image = "rbxassetid://85025550755267"
             TrophyIcon.ScaleType = Enum.ScaleType.Fit
             TrophyIcon.ZIndex = 52
@@ -362,8 +518,7 @@ do
             buildDistanceOptions()
             
             local maxSpd = 110
-            if (currentWorld == "2 World") then maxSpd = 190
-            elseif (currentWorld == "Bbnos World") then maxSpd = 300 end 
+            if (currentWorld == "2 World") then maxSpd = 190 end
             
             if (currentSpeed > maxSpd) then currentSpeed = maxSpd end 
             SliderLabel.Text = string.format("Скорость полёта: %d", currentSpeed)
@@ -372,35 +527,23 @@ do
         table.insert(worldButtons, btn)
     end 
 
-    createWorldBtn("1 W", 0, 0.25, 1)
-    createWorldBtn("2 W", 0.25, 0.25, 2)
-    createWorldBtn("3 W", 0.5, 0.25, 3)
-    createWorldBtn("Bbnos", 0.75, 0.25, 4)
-
-    -- Выбор этапа из выпадающего списка
-    local DistLabel = Instance.new("TextLabel", ContentArea)
-    DistLabel.BackgroundTransparency = 1
-    DistLabel.Position = UDim2.new(0, 0, 0, 64)
-    DistLabel.Size = UDim2.new(1, 0, 0, 16)
-    DistLabel.Font = Enum.Font.GothamSemibold
-    DistLabel.Text = "Выбрать этап фарминга:"
-    DistLabel.TextColor3 = Color3.fromRGB(200, 200, 220)
-    DistLabel.TextSize = 12
-    DistLabel.TextXAlignment = Enum.TextXAlignment.Left
+    createWorldBtn("1 W", 0, 0.33, 1)
+    createWorldBtn("2 W", 0.33, 0.33, 2)
+    createWorldBtn("3 W", 0.66, 0.34, 3)
 
     DropdownBtn.BackgroundColor3 = Color3.fromRGB(16, 16, 23)
-    DropdownBtn.Position = UDim2.new(0, 0, 0, 82)
-    DropdownBtn.Size = UDim2.new(1, 0, 0, 34)
+    DropdownBtn.Position = UDim2.new(0, 0, 0, 102)
+    DropdownBtn.Size = UDim2.new(1, -10, 0, 32)
     DropdownBtn.Font = Enum.Font.GothamBold
     DropdownBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    DropdownBtn.TextSize = 12
+    DropdownBtn.TextSize = 11
     DropdownBtn.TextXAlignment = Enum.TextXAlignment.Left
     DropdownBtn.ZIndex = 10
     Instance.new("UICorner", DropdownBtn).CornerRadius = UDim.new(0, 8)
 
     DropdownList.BackgroundColor3 = Color3.fromRGB(14, 14, 20)
-    DropdownList.Position = UDim2.new(0, 0, 0, 118)
-    DropdownList.Size = UDim2.new(1, 0, 0, 100)
+    DropdownList.Position = UDim2.new(0, 0, 0, 136)
+    DropdownList.Size = UDim2.new(1, -10, 0, 90)
     DropdownList.Visible = false
     DropdownList.ZIndex = 50
     DropdownList.AutomaticCanvasSize = Enum.AutomaticSize.Y
@@ -415,60 +558,20 @@ do
         DropdownList.Visible = not DropdownList.Visible
     end)
 
-    -- Переключатель Авто Фарма Кубков
-    local ToggleFrame = Instance.new("Frame", ContentArea)
-    ToggleFrame.BackgroundColor3 = Color3.fromRGB(16, 16, 23)
-    ToggleFrame.Position = UDim2.new(0, 0, 0, 124)
-    ToggleFrame.Size = UDim2.new(1, 0, 0, 40)
-    Instance.new("UICorner", ToggleFrame).CornerRadius = UDim.new(0, 8)
-
-    local ToggleLabel = Instance.new("TextLabel", ToggleFrame)
-    ToggleLabel.BackgroundTransparency = 1
-    ToggleLabel.Position = UDim2.new(0, 12, 0, 0)
-    ToggleLabel.Size = UDim2.new(0.6, 0, 1, 0)
-    ToggleLabel.Font = Enum.Font.GothamBold
-    ToggleLabel.Text = "Авто Фарм Кубков"
-    ToggleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-    ToggleLabel.TextSize = 12
-    ToggleLabel.TextXAlignment = Enum.TextXAlignment.Left
-
-    local SwitchBG = Instance.new("TextButton", ToggleFrame)
-    SwitchBG.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
-    SwitchBG.Position = UDim2.new(1, -50, 0.5, -10)
-    SwitchBG.Size = UDim2.new(0, 40, 0, 20)
-    SwitchBG.Text = ""
-    Instance.new("UICorner", SwitchBG).CornerRadius = UDim.new(0, 10)
-
-    local SwitchDot = Instance.new("Frame", SwitchBG)
-    SwitchDot.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    SwitchDot.Position = UDim2.new(0, 2, 0.5, -8)
-    SwitchDot.Size = UDim2.new(0, 16, 0, 16)
-    Instance.new("UICorner", SwitchDot).CornerRadius = UDim.new(0, 8)
-
-    SwitchBG.MouseButton1Click:Connect(function() 
-        if not currentDistance then return end 
-        autoFarmActive = not autoFarmActive
-        
-        if autoFarmActive then 
-            TweenService:Create(SwitchBG, TweenInfo.new(0.2), {BackgroundColor3 = accentColor}):Play()
-            TweenService:Create(SwitchDot, TweenInfo.new(0.2), {Position = UDim2.new(0, 22, 0.5, -8)}):Play()
-            startAutoFarmLoop()
-        else 
-            TweenService:Create(SwitchBG, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(40, 40, 55)}):Play()
-            TweenService:Create(SwitchDot, TweenInfo.new(0.2), {Position = UDim2.new(0, 2, 0.5, -8)}):Play()
-            setNoClip(false)
-        end 
+    CreateToggle(FarmContainer, "Авто Фарм Кубков", 140, function(state)
+        autoFarmCups = state
+        if state then startAutoFarmCupsLoop() end
     end)
 
-    -- Слайдер скорости
-    local SliderFrame = Instance.new("Frame", ContentArea)
+    -- Слайдер Скорости
+    local SliderFrame = Instance.new("Frame", FarmContainer)
     SliderFrame.BackgroundColor3 = Color3.fromRGB(16, 16, 23)
-    SliderFrame.Position = UDim2.new(0, 0, 0, 172)
-    SliderFrame.Size = UDim2.new(1, 0, 0, 50)
+    SliderFrame.Position = UDim2.new(0, 0, 0, 184)
+    SliderFrame.Size = UDim2.new(1, -10, 0, 44)
     Instance.new("UICorner", SliderFrame).CornerRadius = UDim.new(0, 8)
 
-    SliderLabel.Position = UDim2.new(0, 12, 0, 6)
-    SliderLabel.Size = UDim2.new(1, -24, 0, 16)
+    SliderLabel.Position = UDim2.new(0, 12, 0, 4)
+    SliderLabel.Size = UDim2.new(1, -24, 0, 14)
     SliderLabel.Font = Enum.Font.GothamSemibold
     SliderLabel.Text = string.format("Скорость полёта: %d", currentSpeed)
     SliderLabel.TextColor3 = Color3.fromRGB(200, 200, 220)
@@ -477,7 +580,7 @@ do
 
     local SliderTrack = Instance.new("TextButton", SliderFrame)
     SliderTrack.BackgroundColor3 = Color3.fromRGB(32, 32, 45)
-    SliderTrack.Position = UDim2.new(0, 12, 0, 26)
+    SliderTrack.Position = UDim2.new(0, 12, 0, 22)
     SliderTrack.Size = UDim2.new(1, -24, 0, 12)
     SliderTrack.Text = ""
     Instance.new("UICorner", SliderTrack).CornerRadius = UDim.new(0, 6)
@@ -491,8 +594,7 @@ do
     local function updateSpeedAuto(input) 
         local fraction = math.clamp((input.Position.X - SliderTrack.AbsolutePosition.X) / SliderTrack.AbsoluteSize.X, 0, 1)
         local maxSpd = 110
-        if (currentWorld == "2 World") then maxSpd = 190
-        elseif (currentWorld == "Bbnos World") then maxSpd = 300 end 
+        if (currentWorld == "2 World") then maxSpd = 190 end
         
         currentSpeed = math.floor(fraction * maxSpd)
         SliderLabel.Text = string.format("Скорость полёта: %d", currentSpeed)
@@ -516,6 +618,17 @@ do
         end 
     end)
 
+    -- ==========================================
+    -- ЭЛЕМЕНТЫ ВКЛАДКИ ИГРОК
+    -- ==========================================
+    CreateToggle(PlayerContainer, "Ходить сквозь стены (Noclip)", 0, function(state)
+        setNoClip(state)
+    end)
+
+    CreateToggle(PlayerContainer, "Бессмертие (God Mode)", 44, function(state)
+        toggleGodMode(state)
+    end)
+
     buildDistanceOptions()
-    print("[FixScript] Загружен с мирами и выпадающим списком!")
+    print("[FixScript] Успешно загружен и обновлен!")
 end
